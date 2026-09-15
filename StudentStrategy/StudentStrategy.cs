@@ -1,6 +1,8 @@
-namespace Strategy;
+using ChronicTruant.History;
 
-public class Strategy : ISkipStrategy
+namespace ChronicTruant.StudentStrategy;
+
+public class StudentStrategy : ISkipStrategy
 {
     public string Name => "My First Strategy";
 

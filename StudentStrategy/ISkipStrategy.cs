@@ -1,3 +1,6 @@
+using ChronicTruant.History;
+
+namespace ChronicTruant.StudentStrategy;
 public interface ISkipStrategy
 {
     string Name { get; }

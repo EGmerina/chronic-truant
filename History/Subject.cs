@@ -1,3 +1,4 @@
+namespace ChronicTruant.History;
 public enum Subject
 
 {

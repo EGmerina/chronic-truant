@@ -1,3 +1,5 @@
+using ChronicTruant.Teachers;
+namespace ChronicTruant.History;
 public interface IReadOnlyStudentHistory
 {
     /// <summary>Был ли студент на паре по предмету в указанный день.</summary>

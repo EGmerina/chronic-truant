@@ -1,0 +1,1 @@
+namespace ChronicTruant.History;

@@ -1,27 +1,42 @@
-using ChronicTruant.Simulation;
 using ChronicTruant.History;
+using ChronicTruant.Simulation;
 using ChronicTruant.StudentStrategy;
 using ChronicTruant.Teachers;
 using ChronicTruant.Writer;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-Random random = new();
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+builder.Logging.ClearProviders();
+builder.Services.Configure<HostOptions>(options =>
+    options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.StopHost);
 
-var factory = new TeacherFactory(random);
+builder.Services.AddSingleton<Random>();
+builder.Services.AddSingleton<TeacherFactory>();
+builder.Services.AddSingleton<IReadOnlyList<Teacher>>(serviceProvider =>
+{
+    TeacherFactory factory = serviceProvider.GetRequiredService<TeacherFactory>();
 
-var teachers = Enum.GetValues<Subject>()
-    .Select(subject => factory.Create(subject))
-    .ToList();
+    return Enum.GetValues<Subject>()
+        .Select(factory.Create)
+        .ToList();
+});
 
-ISkipStrategy strategy = new AlwaysAttendStrategy();
+builder.Services.AddSingleton<StudentHistory>();
+builder.Services.AddSingleton<IReadOnlyStudentHistory>(serviceProvider =>
+    serviceProvider.GetRequiredService<StudentHistory>());
+builder.Services.AddSingleton<ISkipStrategy, AlwaysAttendStrategy>();
+builder.Services.AddSingleton<DaySimulator>();
+builder.Services.AddSingleton<SimulationRunner>();
+builder.Services.AddSingleton<IWriter, ConsoleWriter>();
 
-StudentHistory history = new StudentHistory();
+builder.Services.AddHostedService<SimulationWorker>();
+builder.Services.AddHostedService<KeyboardStopWorker>();
 
-DaySimulator daySimulator = new DaySimulator(teachers, strategy, history);
+using IHost host = builder.Build();
 
-ConsoleWriter consoleWriter = new ConsoleWriter();
+IWriter writer = host.Services.GetRequiredService<IWriter>();
+writer.WriteStartMessage();
 
-SemesterSimulator semesterSimulator = new SemesterSimulator(daySimulator, consoleWriter);
-
-semesterSimulator.Run();
-
-
+await host.RunAsync();

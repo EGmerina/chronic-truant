@@ -2,6 +2,7 @@ using ChronicTruant.Simulation;
 using ChronicTruant.History;
 using ChronicTruant.StudentStrategy;
 using ChronicTruant.Teachers;
+using ChronicTruant.Writer;
 
 Random random = new();
 

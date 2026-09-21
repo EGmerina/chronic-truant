@@ -1,6 +1,7 @@
 using ChronicTruant.History;
 using ChronicTruant.StudentStrategy;
 using ChronicTruant.Teachers;
+using ChronicTruant.Writer;
 
 namespace ChronicTruant.Simulation;
 

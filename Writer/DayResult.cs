@@ -1,5 +1,5 @@
 using ChronicTruant.History;
-namespace ChronicTruant.Simulation;
+namespace ChronicTruant.Writer;
 
 public record DayResult(
     int Pleasure,

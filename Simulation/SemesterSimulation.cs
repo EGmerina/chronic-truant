@@ -1,4 +1,4 @@
-
+using ChronicTruant.Writer;
 namespace ChronicTruant.Simulation;
 public class SemesterSimulator
 {

@@ -1,7 +1,7 @@
 
-namespace ChronicTruant.Simulation;
+namespace ChronicTruant.Writer;
 
-public class ConsoleWriter
+public class ConsoleWriter : IWriter
 {
     public void WriteDayResult(int day, DayResult result)
     {

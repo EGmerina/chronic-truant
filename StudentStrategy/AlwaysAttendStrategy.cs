@@ -2,9 +2,9 @@ using ChronicTruant.History;
 
 namespace ChronicTruant.StudentStrategy;
 
-public class StudentStrategy : ISkipStrategy
+public class AlwaysAttendStrategy : ISkipStrategy
 {
-    public string Name => "My First Strategy";
+    public string Name => "Always Attend Strategy";
 
     public bool[] DecideDay(int day, IReadOnlyStudentHistory history)
     {

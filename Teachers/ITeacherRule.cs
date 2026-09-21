@@ -7,3 +7,11 @@ public interface ITeacherRule
 {
     bool WillAsk(int day, Subject subject, IReadOnlyStudentHistory history);
 }
+
+
+public enum RuleType
+{
+    RandomRule,
+    XorSubjectsRule,
+    YesterdayAskedRule,
+}

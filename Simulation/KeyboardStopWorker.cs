@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace ChronicTruant.Simulation;
 
-/// <summary>Останавливает хост после нажатия любой клавиши в интерактивной консоли.</summary>
+// <summary>Останавливает хост после нажатия любой клавиши в интерактивной консоли.</summary>
 public class KeyboardStopWorker : BackgroundService
 {
     private readonly IHostApplicationLifetime _applicationLifetime;

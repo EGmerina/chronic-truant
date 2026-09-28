@@ -2,7 +2,7 @@ using ChronicTruant.Writer;
 
 namespace ChronicTruant.Simulation;
 
-/// <summary>Хранит прогресс бесконечной симуляции и запускает очередной день.</summary>
+// <summary>Хранит прогресс бесконечной симуляции и запускает очередной день.</summary>
 public class SimulationRunner 
 {
     private readonly DaySimulator _daySimulator;

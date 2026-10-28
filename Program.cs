@@ -12,6 +12,9 @@ builder.Logging.ClearProviders();
 builder.Services.Configure<HostOptions>(options =>
     options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.StopHost);
 
+builder.Services.Configure<SimulationOptions>(
+    builder.Configuration.GetSection(SimulationOptions.SectionName));
+
 builder.Services.AddSingleton<Random>();
 builder.Services.AddSingleton<TeacherFactory>();
 builder.Services.AddSingleton<IReadOnlyList<Teacher>>(serviceProvider =>

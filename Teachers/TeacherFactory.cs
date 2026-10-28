@@ -1,14 +1,18 @@
 using ChronicTruant.History;
+using ChronicTruant.Simulation;
+using Microsoft.Extensions.Options;
 
 namespace ChronicTruant.Teachers;
 
 public class TeacherFactory
 {
     private readonly Random _random;
+    private readonly double _randomRuleAskProbability;
 
-    public TeacherFactory(Random random)
+    public TeacherFactory(Random random, IOptions<SimulationOptions> options)
     {
         _random = random;
+        _randomRuleAskProbability = options.Value.RandomRuleAskProbability;
     }
 
     public Teacher Create(Subject subject)
@@ -18,7 +22,7 @@ public class TeacherFactory
 
         ITeacherRule rule = ruleType switch
         {
-            RuleType.RandomRule => new RandomRule(_random),
+            RuleType.RandomRule => new RandomRule(_random, _randomRuleAskProbability),
             RuleType.YesterdayAskedRule => new YesterdayAskedRule(GetRandomSubject()),
             RuleType.XorSubjectsRule => CreateXorRule(),
             _ => throw new InvalidOperationException($"Unknown rule: {ruleType}")

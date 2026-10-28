@@ -8,14 +8,9 @@ public class AlwaysAttendStrategy : ISkipStrategy
 
     public bool[] DecideDay(int day, IReadOnlyStudentHistory history)
     {
-        return
-        [
-            true,
-            true,
-            true,
-            true,
-            true,
-            true
-        ];
+        bool[] decisions = new bool[Enum.GetValues<Subject>().Length];
+        Array.Fill(decisions, true);
+
+        return decisions;
     }
 }

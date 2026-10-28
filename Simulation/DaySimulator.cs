@@ -2,33 +2,34 @@ using ChronicTruant.History;
 using ChronicTruant.StudentStrategy;
 using ChronicTruant.Teachers;
 using ChronicTruant.Writer;
+using Microsoft.Extensions.Options;
 
 namespace ChronicTruant.Simulation;
 
 public class DaySimulator
 {
-    private const int PiePleasure = 1;
-    private const int SkipPleasure = 1;
-
     private readonly IReadOnlyList<Teacher> _teachers;
     private readonly ISkipStrategy _strategy;
     private readonly StudentHistory _history;
+    private readonly SimulationOptions _options;
 
     public DaySimulator(
         IReadOnlyList<Teacher> teachers,
         ISkipStrategy strategy,
-        StudentHistory history)
+        StudentHistory history,
+        IOptions<SimulationOptions> options)
     {
         _teachers = teachers;
         _strategy = strategy;
         _history = history;
+        _options = options.Value;
     }
 
     public DayResult Simulate(int day)
     {
         bool[] decisions = _strategy.DecideDay(day, _history);
 
-        int pleasure = PiePleasure;
+        int pleasure = _options.PiePleasure;
 
         for (int i = 0; i < _teachers.Count; i++)
         {
@@ -43,7 +44,7 @@ public class DaySimulator
                     day,
                     teacher.Subject,
                     attended: false,
-                    wasAsked: null);
+                    wasAsked: true);
 
                 return new DayResult(
                     Pleasure: 0,
@@ -63,7 +64,7 @@ public class DaySimulator
 
             if (!attended)
             {
-                pleasure += SkipPleasure;
+                pleasure += _options.SkipPleasure;
             }
         }
 

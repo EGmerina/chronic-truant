@@ -1,5 +1,6 @@
 using ChronicTruant.Writer;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace ChronicTruant.Simulation;
 
@@ -8,13 +9,16 @@ public class KeyboardStopWorker : BackgroundService
 {
     private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IWriter _writer;
+    private readonly TimeSpan _pollInterval;
 
     public KeyboardStopWorker(
         IHostApplicationLifetime applicationLifetime,
-        IWriter writer)
+        IWriter writer,
+        IOptions<SimulationOptions> options)
     {
         _applicationLifetime = applicationLifetime;
         _writer = writer;
+        _pollInterval = TimeSpan.FromMilliseconds(options.Value.KeyboardPollMilliseconds);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -34,7 +38,7 @@ public class KeyboardStopWorker : BackgroundService
                 return;
             }
 
-            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
+            await Task.Delay(_pollInterval, stoppingToken);
         }
     }
 }

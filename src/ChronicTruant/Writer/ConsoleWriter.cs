@@ -1,10 +1,17 @@
-
 using ChronicTruant.Simulation;
+using Microsoft.Extensions.Options;
 
 namespace ChronicTruant.Writer;
 
 public class ConsoleWriter : IWriter
 {
+    private readonly SimulationOptions _options;
+
+    public ConsoleWriter(IOptions<SimulationOptions> options)
+    {
+        _options = options.Value;
+    }
+
     public void WriteDayResult(int day, DayResult result)
     {
         if (result.Expelled)
@@ -39,7 +46,8 @@ public class ConsoleWriter : IWriter
         Console.WriteLine("║       МАСТЕР ПРОГУЛОВ 80-ГО УРОВНЯ            ║");
         Console.WriteLine("╠══════════════════════════════════════════════╣");
         Console.WriteLine("║ Симуляция запущена                            ║");
-        Console.WriteLine("║ Новый учебный день — каждые 5 секунд          ║");
+        string interval = $"Новый учебный день — каждые {_options.DayIntervalSeconds} сек.";
+        Console.WriteLine($"║ {interval,-46}║");
         Console.WriteLine("║ Нажмите любую клавишу для остановки           ║");
         Console.WriteLine("╚══════════════════════════════════════════════╝");
     }

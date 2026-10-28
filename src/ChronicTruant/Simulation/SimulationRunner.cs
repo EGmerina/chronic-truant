@@ -9,6 +9,8 @@ public class SimulationRunner
     private int _day;
     private int _totalPleasure;
 
+    public bool IsExpelled { get; private set; }
+
     public SimulationRunner(DaySimulator daySimulator)
     {
         _daySimulator = daySimulator;
@@ -16,8 +18,14 @@ public class SimulationRunner
 
     public SimulationProgress SimulateNextDay()
     {
+        if (IsExpelled)
+        {
+            throw new InvalidOperationException("Студент отчислен, дальнейшие дни не моделируются.");
+        }
+
         _day++;
         DayResult result = _daySimulator.Simulate(_day);
+        IsExpelled = result.Expelled;
 
         _totalPleasure = result.Expelled
             ? 0

@@ -7,7 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+// appsettings.json копируется рядом со сборкой, поэтому конфиг читается оттуда, откуда бы ни запускали.
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+{
+    Args = args,
+    ContentRootPath = AppContext.BaseDirectory
+});
 builder.Logging.ClearProviders();
 builder.Services.Configure<HostOptions>(options =>
     options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.StopHost);

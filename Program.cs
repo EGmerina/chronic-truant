@@ -29,7 +29,7 @@ builder.Services.AddSingleton<IReadOnlyList<Teacher>>(serviceProvider =>
 builder.Services.AddSingleton<StudentHistory>();
 builder.Services.AddSingleton<IReadOnlyStudentHistory>(serviceProvider =>
     serviceProvider.GetRequiredService<StudentHistory>());
-builder.Services.AddSingleton<ISkipStrategy, AlwaysAttendStrategy>();
+builder.Services.AddSingleton<ISkipStrategy, RuleGuessingStrategy>();
 builder.Services.AddSingleton<DaySimulator>();
 builder.Services.AddSingleton<SimulationRunner>();
 builder.Services.AddSingleton<IWriter, ConsoleWriter>();

@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ChronicTruant/ChronicTruant.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ChronicTruant.Tests/ChronicTruant.Tests.csproj" />
+  </Folder>
+</Solution>

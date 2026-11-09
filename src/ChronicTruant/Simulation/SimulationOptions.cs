@@ -9,4 +9,5 @@ public class SimulationOptions
     public int SkipPleasure { get; init; } = 1;
     public double RandomRuleAskProbability { get; init; } = 0.5;
     public int KeyboardPollMilliseconds { get; init; } = 100;
+    public double MaxSkipRisk { get; init; } = 0.001;
 }

@@ -7,7 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+// appsettings.json копируется рядом со сборкой, поэтому конфиг читается оттуда, откуда бы ни запускали.
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+{
+    Args = args,
+    ContentRootPath = AppContext.BaseDirectory
+});
 builder.Logging.ClearProviders();
 builder.Services.Configure<HostOptions>(options =>
     options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.StopHost);
@@ -29,7 +34,7 @@ builder.Services.AddSingleton<IReadOnlyList<Teacher>>(serviceProvider =>
 builder.Services.AddSingleton<StudentHistory>();
 builder.Services.AddSingleton<IReadOnlyStudentHistory>(serviceProvider =>
     serviceProvider.GetRequiredService<StudentHistory>());
-builder.Services.AddSingleton<ISkipStrategy, AlwaysAttendStrategy>();
+builder.Services.AddSingleton<ISkipStrategy, RuleGuessingStrategy>();
 builder.Services.AddSingleton<DaySimulator>();
 builder.Services.AddSingleton<SimulationRunner>();
 builder.Services.AddSingleton<IWriter, ConsoleWriter>();

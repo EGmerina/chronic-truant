@@ -17,6 +17,15 @@ public class StudentHistory : IReadOnlyStudentHistory
         return _asked[(day, subject)];
     }
 
+    /// <summary>Все пары указанного дня, которые были записаны (при вылете часть пар дня отсутствует).</summary>
+    public IReadOnlyList<LessonRecord> GetDay(int day)
+    {
+        return Enum.GetValues<Subject>()
+            .Where(subject => _attendance.ContainsKey((day, subject)))
+            .Select(subject => new LessonRecord(subject, _attendance[(day, subject)], _asked[(day, subject)]))
+            .ToList();
+    }
+
     public void AddDay(int day, Subject subject, bool attended, bool? wasAsked)
     {
         _attendance[(day, subject)] = attended;

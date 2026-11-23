@@ -64,6 +64,29 @@ public class RecordingWriter : IWriter
     public void WriteStoppedByUser()
     {
     }
+
+    public void WriteSemesterStarted(int semesterId)
+    {
+    }
+
+    public void WriteSemesterResumed(int semesterId, int completedDays, int totalPleasure)
+    {
+    }
+
+    public void WriteNothingToResume()
+    {
+    }
+
+    public void WriteSemesterFinished(SimulationProgress progress)
+    {
+        Finished = progress;
+    }
+
+    public void WriteDatabaseUnavailable(string error)
+    {
+    }
+
+    public SimulationProgress? Finished { get; private set; }
 }
 
 public class FakeLifetime : IHostApplicationLifetime

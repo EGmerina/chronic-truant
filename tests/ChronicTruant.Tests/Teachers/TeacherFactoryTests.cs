@@ -14,32 +14,27 @@ public class TeacherFactoryTests
     }
 
     [Fact]
-    public void Create_RandomRule_UsesRandomSourceForEachQuestion()
+    public void GenerateRule_RandomRule_TakesSeedFromRandomSource()
     {
-        QueueRandom random = new(doubles: [0.2, 0.8], ints: [(int)RuleType.RandomRule]);
-        Teacher teacher = CreateFactory(random).Create(Subject.English);
-        StudentHistory history = new();
+        QueueRandom random = new(ints: [(int)RuleType.RandomRule, 42]);
 
-        Assert.Equal(Subject.English, teacher.Subject);
-        Assert.True(teacher.WillAsk(1, history));
-        Assert.False(teacher.WillAsk(2, history));
+        TeacherRuleSettings settings = CreateFactory(random).GenerateRule();
+
+        Assert.Equal(new TeacherRuleSettings(RuleType.RandomRule, Seed: 42), settings);
     }
 
     [Fact]
-    public void Create_YesterdayAskedRule_UsesRandomlyChosenSubject()
+    public void GenerateRule_YesterdayAskedRule_TakesSubjectFromRandomSource()
     {
         QueueRandom random = new(ints: [(int)RuleType.YesterdayAskedRule, (int)Subject.Physics]);
-        Teacher teacher = CreateFactory(random).Create(Subject.English);
 
-        StudentHistory physicsAsked = HistoryBuilder.Attended(1, (_, subject) => subject == Subject.Physics);
-        StudentHistory calculusAsked = HistoryBuilder.Attended(1, (_, subject) => subject == Subject.Calculus);
+        TeacherRuleSettings settings = CreateFactory(random).GenerateRule();
 
-        Assert.True(teacher.WillAsk(2, physicsAsked));
-        Assert.False(teacher.WillAsk(2, calculusAsked));
+        Assert.Equal(new TeacherRuleSettings(RuleType.YesterdayAskedRule, SubjectA: Subject.Physics), settings);
     }
 
     [Fact]
-    public void Create_XorRule_RerollsSecondSubjectWhenItMatchesFirst()
+    public void GenerateRule_XorRule_RerollsSecondSubjectWhenItMatchesFirst()
     {
         QueueRandom random = new(ints:
         [
@@ -48,7 +43,35 @@ public class TeacherFactoryTests
             (int)Subject.Calculus,
             (int)Subject.Physics
         ]);
-        Teacher teacher = CreateFactory(random).Create(Subject.English);
+
+        TeacherRuleSettings settings = CreateFactory(random).GenerateRule();
+
+        Assert.Equal(
+            new TeacherRuleSettings(RuleType.XorSubjectsRule, SubjectA: Subject.Calculus, SubjectB: Subject.Physics),
+            settings);
+    }
+
+    [Fact]
+    public void Create_FromYesterdayAskedSettings_AsksAfterSubjectA()
+    {
+        Teacher teacher = CreateFactory(new QueueRandom()).Create(
+            Subject.English,
+            new TeacherRuleSettings(RuleType.YesterdayAskedRule, SubjectA: Subject.Physics));
+
+        StudentHistory physicsAsked = HistoryBuilder.Attended(1, (_, subject) => subject == Subject.Physics);
+        StudentHistory calculusAsked = HistoryBuilder.Attended(1, (_, subject) => subject == Subject.Calculus);
+
+        Assert.Equal(Subject.English, teacher.Subject);
+        Assert.True(teacher.WillAsk(2, physicsAsked));
+        Assert.False(teacher.WillAsk(2, calculusAsked));
+    }
+
+    [Fact]
+    public void Create_FromXorSettings_AsksWhenExactlyOneSubjectWasAsked()
+    {
+        Teacher teacher = CreateFactory(new QueueRandom()).Create(
+            Subject.English,
+            new TeacherRuleSettings(RuleType.XorSubjectsRule, SubjectA: Subject.Calculus, SubjectB: Subject.Physics));
 
         StudentHistory onlyCalculus = HistoryBuilder.Attended(1, (_, subject) => subject == Subject.Calculus);
         StudentHistory both = HistoryBuilder.Attended(
@@ -57,5 +80,30 @@ public class TeacherFactoryTests
 
         Assert.True(teacher.WillAsk(2, onlyCalculus));
         Assert.False(teacher.WillAsk(2, both));
+    }
+
+    [Fact]
+    public void Create_FromRandomSettings_RestoredTeacherContinuesSameSequence()
+    {
+        TeacherFactory factory = CreateFactory(new QueueRandom());
+        TeacherRuleSettings settings = new(RuleType.RandomRule, Seed: 12345);
+        StudentHistory history = new();
+
+        Teacher fromStart = factory.Create(Subject.English, settings);
+        bool[] continuous = Enumerable.Range(1, 20).Select(day => fromStart.WillAsk(day, history)).ToArray();
+
+        Teacher restored = factory.Create(Subject.English, settings, completedDays: 8);
+        bool[] afterRestore = Enumerable.Range(9, 12).Select(day => restored.WillAsk(day, history)).ToArray();
+
+        Assert.Equal(continuous[8..], afterRestore);
+    }
+
+    [Fact]
+    public void Create_WithMissingParameters_Throws()
+    {
+        TeacherFactory factory = CreateFactory(new QueueRandom());
+
+        Assert.Throws<InvalidOperationException>(() =>
+            factory.Create(Subject.English, new TeacherRuleSettings(RuleType.YesterdayAskedRule)));
     }
 }

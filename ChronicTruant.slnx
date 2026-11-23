@@ -3,6 +3,7 @@
     <Project Path="src/ChronicTruant/ChronicTruant.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/ChronicTruant.IntegrationTests/ChronicTruant.IntegrationTests.csproj" />
     <Project Path="tests/ChronicTruant.Tests/ChronicTruant.Tests.csproj" />
   </Folder>
 </Solution>

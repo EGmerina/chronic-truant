@@ -1,4 +1,5 @@
 using ChronicTruant.History;
+using ChronicTruant.Persistence;
 using ChronicTruant.Simulation;
 using ChronicTruant.StudentStrategy;
 using ChronicTruant.Teachers;
@@ -131,28 +132,126 @@ public class SimulationTests
     }
 
     [Fact]
+    public void Runner_RestoredFromProgress_ContinuesNumberingAndPleasure()
+    {
+        List<Teacher> teachers = CreateTeachers(_ => new AskOnDaysRule());
+        SimulationRunner runner = new(
+            CreateSimulator(teachers, new FixedStrategy(AllSubjects(true)), new StudentHistory()),
+            completedDays: 10,
+            totalPleasure: 25);
+
+        SimulationProgress progress = runner.SimulateNextDay();
+
+        Assert.Equal(11, progress.Day);
+        Assert.Equal(26, progress.TotalPleasure);
+    }
+
+    [Fact]
     public async Task Worker_StopsApplicationAfterExpulsion_AndProcessesNoMoreDays()
     {
-        bool[] decisions = AllSubjects(attend: false);
         AskOnDaysRule english = new(3);
         List<Teacher> teachers = CreateTeachers(subject =>
             subject == Subject.English ? english : new AskOnDaysRule());
-        SimulationRunner runner = new(CreateSimulator(teachers, new FixedStrategy(decisions), new StudentHistory()));
+        SemesterSession session = CreateSession(teachers, AllSubjects(attend: false), semesterDays: 100);
 
         RecordingWriter writer = new();
         FakeLifetime lifetime = new();
-        SimulationWorker worker = new(
+        await RunWorkerAsync(session, writer, lifetime);
+
+        Assert.Equal([1, 2, 3], writer.Days.Select(d => d.Day));
+        Assert.True(writer.Days[^1].Result.Expelled);
+        Assert.Null(writer.Finished);
+        Assert.Equal(1, lifetime.StopCalls);
+        Assert.Equal(3, english.Calls);
+    }
+
+    [Fact]
+    public async Task Worker_StopsApplicationAtEndOfSemester()
+    {
+        List<Teacher> teachers = CreateTeachers(_ => new AskOnDaysRule());
+        SemesterSession session = CreateSession(teachers, AllSubjects(attend: true), semesterDays: 4);
+
+        RecordingWriter writer = new();
+        FakeLifetime lifetime = new();
+        await RunWorkerAsync(session, writer, lifetime);
+
+        Assert.Equal([1, 2, 3, 4], writer.Days.Select(d => d.Day));
+        Assert.Equal(4, writer.Finished?.Day);
+        Assert.Equal(1, lifetime.StopCalls);
+    }
+
+    private static SemesterSession CreateSession(
+        List<Teacher> teachers,
+        bool[] decisions,
+        int semesterDays,
+        ISemesterStore? store = null)
+    {
+        StudentHistory history = new();
+        SimulationRunner runner = new(CreateSimulator(teachers, new FixedStrategy(decisions), history));
+
+        return new SemesterSession(
+            id: 1,
+            rules: new Dictionary<Subject, TeacherRuleSettings>(),
             runner,
+            history,
+            store ?? new InMemorySemesterStore(),
+            semesterDays);
+    }
+
+    private static async Task RunWorkerAsync(SemesterSession session, RecordingWriter writer, FakeLifetime lifetime)
+    {
+        SimulationWorker worker = new(
+            session,
             writer,
             lifetime,
             Options.Create(new SimulationOptions { DayIntervalSeconds = 0.001 }));
 
         await worker.StartAsync(CancellationToken.None);
         await worker.ExecuteTask!.WaitAsync(TimeSpan.FromSeconds(5));
+    }
 
-        Assert.Equal([1, 2, 3], writer.Days.Select(d => d.Day));
-        Assert.True(writer.Days[^1].Result.Expelled);
-        Assert.Equal(1, lifetime.StopCalls);
-        Assert.Equal(3, english.Calls);
+    [Fact]
+    public void Session_SavesEveryDayWithItsLessons()
+    {
+        InMemorySemesterStore store = new();
+        bool[] decisions = AllSubjects(attend: true);
+        decisions[(int)Subject.Physics] = false;
+        List<Teacher> teachers = CreateTeachers(subject =>
+            subject == Subject.Calculus ? new AskOnDaysRule(2) : new AskOnDaysRule());
+        SemesterSession session = CreateSession(teachers, decisions, semesterDays: 3, store);
+
+        session.SimulateNextDay();
+        session.SimulateNextDay();
+        session.SimulateNextDay();
+
+        Assert.Equal([1, 2, 3], store.SavedDays.Select(d => d.Progress.Day));
+        Assert.Equal([false, false, true], store.SavedDays.Select(d => d.Finished));
+        Assert.All(store.SavedDays, day => Assert.Equal(Subjects.Length, day.Lessons.Count));
+
+        LessonRecord calculusDay2 = store.SavedDays[1].Lessons.Single(l => l.Subject == Subject.Calculus);
+        LessonRecord physicsDay2 = store.SavedDays[1].Lessons.Single(l => l.Subject == Subject.Physics);
+        Assert.Equal(new LessonRecord(Subject.Calculus, Attended: true, WasAsked: true), calculusDay2);
+        Assert.Equal(new LessonRecord(Subject.Physics, Attended: false, WasAsked: null), physicsDay2);
+
+        Assert.True(session.IsFinished);
+        Assert.Throws<InvalidOperationException>(() => session.SimulateNextDay());
+    }
+
+    [Fact]
+    public void Session_OnExpulsion_SavesFinishedDayWithLessonsUpToExpulsion()
+    {
+        InMemorySemesterStore store = new();
+        List<Teacher> teachers = CreateTeachers(subject =>
+            subject == Subject.DiscreteMath ? new AskOnDaysRule(1) : new AskOnDaysRule());
+        SemesterSession session = CreateSession(teachers, AllSubjects(attend: false), semesterDays: 100, store);
+
+        session.SimulateNextDay();
+
+        var saved = Assert.Single(store.SavedDays);
+        Assert.True(saved.Finished);
+        Assert.Equal(0, saved.Progress.TotalPleasure);
+        Assert.Equal(
+            [Subject.Calculus, Subject.LinearAlgebra, Subject.DiscreteMath],
+            saved.Lessons.Select(l => l.Subject));
     }
 }

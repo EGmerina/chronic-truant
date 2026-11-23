@@ -12,4 +12,14 @@ public interface IWriter
     public void WriteStartMessage();
 
     public void WriteStoppedByUser();
+
+    public void WriteSemesterStarted(int semesterId);
+
+    public void WriteSemesterResumed(int semesterId, int completedDays, int totalPleasure);
+
+    public void WriteNothingToResume();
+
+    public void WriteSemesterFinished(SimulationProgress progress);
+
+    public void WriteDatabaseUnavailable(string error);
 }

@@ -17,6 +17,11 @@ public class QueueRandom : Random
         return _doubles.Dequeue();
     }
 
+    public override int Next()
+    {
+        return _ints.Dequeue();
+    }
+
     public override int Next(int maxValue)
     {
         int value = _ints.Dequeue();

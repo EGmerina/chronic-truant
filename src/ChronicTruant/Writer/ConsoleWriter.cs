@@ -57,4 +57,33 @@ public class ConsoleWriter : IWriter
         Console.WriteLine();
         Console.WriteLine("Симуляция остановлена пользователем.");
     }
+
+    public void WriteSemesterStarted(int semesterId)
+    {
+        Console.WriteLine($"Начат новый семестр №{semesterId}.");
+    }
+
+    public void WriteSemesterResumed(int semesterId, int completedDays, int totalPleasure)
+    {
+        Console.WriteLine($"Продолжаем семестр №{semesterId}: пройдено дней — {completedDays}, удовольствие — {totalPleasure}.");
+    }
+
+    public void WriteNothingToResume()
+    {
+        Console.WriteLine("Незавершённых семестров нет — начинаем новый.");
+    }
+
+    public void WriteSemesterFinished(SimulationProgress progress)
+    {
+        Console.WriteLine();
+        Console.WriteLine($"🎓 Семестр завершён: {progress.Day} дней, удовольствие {progress.TotalPleasure}.");
+    }
+
+    public void WriteDatabaseUnavailable(string error)
+    {
+        Console.WriteLine();
+        Console.WriteLine("Не удалось подключиться к PostgreSQL. Запустите базу командой `docker compose up -d`");
+        Console.WriteLine("и проверьте строку подключения ConnectionStrings:ChronicTruant в appsettings.json.");
+        Console.WriteLine($"Ошибка: {error}");
+    }
 }

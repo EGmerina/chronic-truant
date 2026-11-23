@@ -17,18 +17,47 @@ public class TeacherFactory
 
     public Teacher Create(Subject subject)
     {
+        return Create(subject, GenerateRule());
+    }
+
+    /// <summary>Случайно выбирает тип правила и его параметры.</summary>
+    public TeacherRuleSettings GenerateRule()
+    {
         RuleType[] types = Enum.GetValues<RuleType>();
         RuleType ruleType = types[_random.Next(types.Length)];
 
-        ITeacherRule rule = ruleType switch
+        return ruleType switch
         {
-            RuleType.RandomRule => new RandomRule(_random, _randomRuleAskProbability),
-            RuleType.YesterdayAskedRule => new YesterdayAskedRule(GetRandomSubject()),
-            RuleType.XorSubjectsRule => CreateXorRule(),
+            RuleType.RandomRule => new TeacherRuleSettings(ruleType, Seed: _random.Next()),
+            RuleType.YesterdayAskedRule => new TeacherRuleSettings(ruleType, SubjectA: GetRandomSubject()),
+            RuleType.XorSubjectsRule => GenerateXorRule(),
             _ => throw new InvalidOperationException($"Unknown rule: {ruleType}")
+        };
+    }
+
+    /// <summary>
+    /// Создаёт преподавателя по сохранённым параметрам правила.
+    /// completedDays — сколько дней семестра уже прошло (нужно, чтобы продолжить случайную последовательность).
+    /// </summary>
+    public Teacher Create(Subject subject, TeacherRuleSettings settings, int completedDays = 0)
+    {
+        ITeacherRule rule = settings.Type switch
+        {
+            RuleType.RandomRule => RandomRule.FromSeed(
+                Require(settings.Seed),
+                _randomRuleAskProbability,
+                completedDays),
+            RuleType.YesterdayAskedRule => new YesterdayAskedRule(Require(settings.SubjectA)),
+            RuleType.XorSubjectsRule => new XorSubjectsRule(Require(settings.SubjectA), Require(settings.SubjectB)),
+            _ => throw new InvalidOperationException($"Unknown rule: {settings.Type}")
         };
 
         return new Teacher(subject, rule);
+    }
+
+    private static T Require<T>(T? value) where T : struct
+    {
+        return value ?? throw new InvalidOperationException("В параметрах правила не хватает значения.");
     }
 
     private Subject GetRandomSubject()
@@ -37,7 +66,7 @@ public class TeacherFactory
         return subjects[_random.Next(subjects.Length)];
     }
 
-    private ITeacherRule CreateXorRule()
+    private TeacherRuleSettings GenerateXorRule()
     {
         Subject[] subjects = Enum.GetValues<Subject>();
 
@@ -57,6 +86,6 @@ public class TeacherFactory
         }
         while (b == a);
 
-        return new XorSubjectsRule(a, b);
+        return new TeacherRuleSettings(RuleType.XorSubjectsRule, SubjectA: a, SubjectB: b);
     }
 }
